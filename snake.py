@@ -54,6 +54,58 @@ def _eletrica_morte(vol=0.45):
         buf[2*i] = val; buf[2*i+1] = val
     return pygame.mixer.Sound(buffer=buf)
 
+def _eletrica_musica(vol=0.18):
+    """Melodia elétrica/energética em loop — sawtooth com ritmo acelerado."""
+    bpm  = 145
+    beat = 60 / bpm
+    h    = beat / 2
+    q    = beat / 4
+    e    = beat / 8
+    mel = [
+        (880, q), (0, e), (880, e), (1047, q), (988, q),
+        (880, h), (784, q), (0, q),
+        (784, q), (0, e), (784, e), (880, q), (784, q),
+        (659, h), (0, h),
+        (988, q), (0, e), (988, e), (1175, q), (1047, q),
+        (988, h), (880, q), (0, q),
+        (784, q), (659, q), (784, q), (880, q),
+        (784, beat), (0, beat),
+    ]
+    bass_notas = [110, 110, 131, 131, 98, 98, 131, 131,
+                  110, 110, 131, 131, 98, 98, 110, 110]
+    bass_dur   = h
+    total_mel  = sum(d for _, d in mel)
+    total_bass = bass_dur * len(bass_notas)
+    total      = max(total_mel, total_bass)
+    n          = int(total * SR)
+    buf        = array.array('h', [0] * (n * 2))
+    pos = 0
+    for freq, dur in mel:
+        samp = int(dur * SR)
+        for i in range(samp):
+            if freq > 0 and pos + i < n:
+                t   = i / SR
+                env = math.exp(-2.5 * t / dur)
+                saw = 2 * ((freq * t) % 1) - 1
+                v   = int(32767 * vol * 0.75 * env * saw)
+                buf[2*(pos+i)]   = max(-32767, min(32767, buf[2*(pos+i)]   + v))
+                buf[2*(pos+i)+1] = max(-32767, min(32767, buf[2*(pos+i)+1] + v))
+        pos += samp
+    pos = 0
+    for freq in bass_notas:
+        samp = int(bass_dur * SR)
+        for i in range(samp):
+            if pos + i < n:
+                t   = i / SR
+                env = 0.5 + 0.5 * math.exp(-5 * t / bass_dur)
+                saw = 2 * ((freq * t) % 1) - 1
+                v   = int(32767 * vol * 0.55 * env * saw)
+                buf[2*(pos+i)]   = max(-32767, min(32767, buf[2*(pos+i)]   + v))
+                buf[2*(pos+i)+1] = max(-32767, min(32767, buf[2*(pos+i)+1] + v))
+        pos += samp
+    return pygame.mixer.Sound(buffer=buf)
+
+
 pygame.init()
 pygame.mixer.init()
 
@@ -281,9 +333,9 @@ class Game:
 
     def _load_assets(self):
         try:
-            pygame.mixer.music.load("Invincible.mp3")
-            pygame.mixer.music.set_volume(0.4)
-            pygame.mixer.music.play(-1)
+            pygame.mixer.init(frequency=SR, size=-16, channels=2, buffer=512)
+            self.musica = _eletrica_musica()
+            self.musica.play(-1)
         except Exception:
             pass
         try:
