@@ -3,9 +3,56 @@ import sys
 import json
 import os
 import math
+import array
 from random import randint, uniform, choice
 from dataclasses import dataclass
 from collections import deque
+
+SR = 44100
+
+def _eletrica_zap(vol=0.38):
+    """Sawtooth elétrico curto e agressivo."""
+    dur = 0.07
+    n   = int(SR * dur)
+    buf = array.array('h', [0] * (n * 2))
+    for i in range(n):
+        t    = i / SR
+        env  = (1.0 - i / n) ** 0.6
+        freq = 520
+        saw  = 2 * ((freq * t) % 1) - 1
+        val  = int(32767 * vol * env * saw)
+        buf[2*i] = val; buf[2*i+1] = val
+    return pygame.mixer.Sound(buffer=buf)
+
+def _eletrica_dourada(vol=0.4):
+    """Sweep ascendente elétrico para maçã dourada."""
+    dur = 0.18
+    n   = int(SR * dur)
+    buf = array.array('h', [0] * (n * 2))
+    for i in range(n):
+        t    = i / SR
+        freq = 300 + 900 * (i / n)
+        env  = 1.0 - (i / n) ** 0.8
+        saw  = 2 * ((freq * t) % 1) - 1
+        val  = int(32767 * vol * env * saw)
+        buf[2*i] = val; buf[2*i+1] = val
+    return pygame.mixer.Sound(buffer=buf)
+
+def _eletrica_morte(vol=0.45):
+    """Descarga elétrica decrescente — sawtooth + ruído."""
+    dur = 0.55
+    n   = int(SR * dur)
+    buf = array.array('h', [0] * (n * 2))
+    import random as _rnd
+    for i in range(n):
+        t    = i / SR
+        freq = 350 * math.exp(-4 * t)
+        env  = (1.0 - i / n) ** 0.5
+        saw  = 2 * ((freq * t) % 1) - 1
+        noise = _rnd.uniform(-0.3, 0.3)
+        val  = int(32767 * vol * env * (saw * 0.7 + noise * 0.3))
+        buf[2*i] = val; buf[2*i+1] = val
+    return pygame.mixer.Sound(buffer=buf)
 
 pygame.init()
 pygame.mixer.init()
@@ -240,10 +287,12 @@ class Game:
         except Exception:
             pass
         try:
-            self.snd_eat = pygame.mixer.Sound("coin.wav")
-            self.snd_eat.set_volume(0.7)
+            pygame.mixer.init(frequency=SR, size=-16, channels=2, buffer=512)
+            self.snd_eat    = _eletrica_zap(0.38)
+            self.snd_dourado = _eletrica_dourada(0.4)
+            self.snd_morte  = _eletrica_morte(0.45)
         except Exception:
-            self.snd_eat = None
+            self.snd_eat = self.snd_dourado = self.snd_morte = None
 
         self.overlay = pygame.Surface((SCREEN_W, SCREEN_H), pygame.SRCALPHA)
 
@@ -435,8 +484,7 @@ class Game:
         elif self.golden_food and (nx, ny) == self.golden_food.pos:
             grow = True
             self.score += 3
-            if self.snd_eat:
-                self.snd_eat.play()
+            if self.snd_dourado: self.snd_dourado.play()
             spawn_particles(self.particles, nx, ny, GOLD_C, 32)
             self.golden_food = None
 
@@ -450,6 +498,7 @@ class Game:
         spawn_particles(self.particles, self.snake[0][0], self.snake[0][1],
                         (220, 50, 50), 40)
         self.flash = 18
+        if self.snd_morte: self.snd_morte.play()
         self.state = self.GAME_OVER
 
     # ── Pausado ───────────────────────────────────────────────────────────────
