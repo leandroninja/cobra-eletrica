@@ -1,4 +1,4 @@
-# Snake
+# Cobra Elétrica
 
 Jogo da cobra clássico com visual moderno em tema neon — grade escura, cobra gradiente, efeitos de partículas e sistema de pontuação com recorde local.
 

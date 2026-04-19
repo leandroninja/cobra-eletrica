@@ -190,7 +190,7 @@ def draw_panel(surf, fonts, score, highscore, level):
     f_xl, f_lg, f_md, f_sm = fonts
     mid = px + PANEL_W // 2
 
-    draw_text(surf, "SNAKE",       f_lg, HEAD_C,  mid, 48,  center=True)
+    draw_text(surf, "COBRA ELÉTRICA", f_lg, HEAD_C,  mid, 48,  center=True)
     pygame.draw.line(surf, (40, 40, 65), (px + 15, 75), (px + PANEL_W - 15, 75))
 
     draw_text(surf, "PONTOS",      f_sm, GRAY,    mid, 95,  center=True)
@@ -224,7 +224,7 @@ class Game:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((SCREEN_W, SCREEN_H))
-        pygame.display.set_caption("Snake")
+        pygame.display.set_caption("Cobra Elétrica")
         self.clock  = pygame.time.Clock()
         self._load_assets()
         self.highscore = load_highscore()
@@ -371,7 +371,7 @@ class Game:
         tc    = (60, int(200 + 55 * pulse), int(80 + 30 * pulse))
         f_xl, f_lg, f_md, f_sm = self.fonts
         mid = GRID_W // 2
-        draw_text(self.screen, "SNAKE",              f_xl, tc,     mid, 175, center=True)
+        draw_text(self.screen, "COBRA ELÉTRICA",     f_xl, tc,     mid, 175, center=True)
         draw_text(self.screen, "Desvie de voce mesmo!", f_md, WHITE, mid, 265, center=True)
         if (t_ms // 500) % 2 == 0:
             draw_text(self.screen, "ENTER para jogar", f_lg, GREEN, mid, 375, center=True)
